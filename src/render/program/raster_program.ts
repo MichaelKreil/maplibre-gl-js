@@ -14,11 +14,9 @@ export type RasterUniformsType = {
     'u_opacity': Uniform1f;
     'u_image0': Uniform1i;
     'u_image1': Uniform1i;
-    'u_brightness_low': Uniform1f;
-    'u_brightness_high': Uniform1f;
-    'u_saturation_factor': Uniform1f;
-    'u_contrast_factor': Uniform1f;
-    'u_spin_weights': Uniform3f;
+    'u_limit': Uniform1f;
+    'u_width0': Uniform1f;
+    'u_width1': Uniform1f;
 };
 
 const rasterUniforms = (context: Context, locations: UniformLocations): RasterUniformsType => ({
@@ -30,11 +28,9 @@ const rasterUniforms = (context: Context, locations: UniformLocations): RasterUn
     'u_opacity': new Uniform1f(context, locations.u_opacity),
     'u_image0': new Uniform1i(context, locations.u_image0),
     'u_image1': new Uniform1i(context, locations.u_image1),
-    'u_brightness_low': new Uniform1f(context, locations.u_brightness_low),
-    'u_brightness_high': new Uniform1f(context, locations.u_brightness_high),
-    'u_saturation_factor': new Uniform1f(context, locations.u_saturation_factor),
-    'u_contrast_factor': new Uniform1f(context, locations.u_contrast_factor),
-    'u_spin_weights': new Uniform3f(context, locations.u_spin_weights)
+    'u_limit': new Uniform1f(context, locations.u_limit),
+    'u_width0': new Uniform1f(context, locations.u_width0),
+    'u_width1': new Uniform1f(context, locations.u_width1),
 });
 
 const rasterUniformValues = (
@@ -45,44 +41,45 @@ const rasterUniformValues = (
         mix: number;
         opacity: number;
     },
-    layer: RasterStyleLayer
-): UniformValues<RasterUniformsType> => ({
-    'u_matrix': matrix,
-    'u_tl_parent': parentTL,
-    'u_scale_parent': parentScaleBy,
-    'u_buffer_scale': 1,
-    'u_fade_t': fade.mix,
-    'u_opacity': fade.opacity * layer.paint.get('raster-opacity'),
-    'u_image0': 0,
-    'u_image1': 1,
-    'u_brightness_low': layer.paint.get('raster-brightness-min'),
-    'u_brightness_high': layer.paint.get('raster-brightness-max'),
-    'u_saturation_factor': saturationFactor(layer.paint.get('raster-saturation')),
-    'u_contrast_factor': contrastFactor(layer.paint.get('raster-contrast')),
-    'u_spin_weights': spinWeights(layer.paint.get('raster-hue-rotate'))
-});
+    layer: RasterStyleLayer,
+    rasterArguments: any
+): UniformValues<RasterUniformsType> => {
 
-function spinWeights(angle) {
-    angle *= Math.PI / 180;
-    const s = Math.sin(angle);
-    const c = Math.cos(angle);
-    return [
-        (2 * c + 1) / 3,
-        (-Math.sqrt(3) * s - c + 1) / 3,
-        (Math.sqrt(3) * s - c + 1) / 3
-    ];
-}
+    const mercatorSize = 1 / (2 ** rasterArguments.z);
+    const mercatorX0 = rasterArguments.x * mercatorSize;
+    const mercatorY0 = rasterArguments.y * mercatorSize;
+    const mercatorX1 = mercatorX0 + mercatorSize;
+    const mercatorY1 = mercatorY0 + mercatorSize;
+    const geoX0 = demercatorX(mercatorX0);
+    const geoY0 = demercatorY(mercatorY0);
+    const geoX1 = demercatorX(mercatorX1);
+    const geoY1 = demercatorY(mercatorY1);
+    const meterWidth = (geoX1 - geoX0) * 111319;
+    const meterWidth0 = meterWidth * Math.cos(geoY0 * Math.PI / 180);
+    const meterWidth1 = meterWidth * Math.cos(geoY1 * Math.PI / 180);
+    const pixelWidth  =  matrix[0] * 4096 / matrix[15] * rasterArguments.width;
 
-function contrastFactor(contrast) {
-    return contrast > 0 ?
-        1 / (1 - contrast) :
-        1 + contrast;
-}
+    function demercatorX(v: number) { return v * 360 - 180; }
+    function demercatorY(v: number) { return (Math.atan(Math.exp((1 - v * 2) * Math.PI)) * 4 / Math.PI - 1) * 90; }
 
-function saturationFactor(saturation) {
-    return saturation > 0 ?
-        1 - 1 / (1.001 - saturation) :
-        -saturation;
-}
+    const valuePerMeter = layer.paint.get('raster-sdf-width');
+
+    const width0 = valuePerMeter * meterWidth0 / pixelWidth;
+    const width1 = valuePerMeter * meterWidth1 / pixelWidth;
+
+    return {
+        'u_matrix': matrix,
+        'u_tl_parent': parentTL,
+        'u_scale_parent': parentScaleBy,
+        'u_buffer_scale': 1,
+        'u_fade_t': fade.mix,
+        'u_opacity': fade.opacity * layer.paint.get('raster-opacity'),
+        'u_image0': 0,
+        'u_image1': 1,
+        'u_limit': layer.paint.get('raster-sdf-limit'),
+        'u_width0': width0,
+        'u_width1': width1,
+    }
+};
 
 export {rasterUniforms, rasterUniformValues};

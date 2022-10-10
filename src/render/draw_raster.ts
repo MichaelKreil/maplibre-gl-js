@@ -47,7 +47,7 @@ function drawRaster(painter: Painter, sourceCache: SourceCache, layer: RasterSty
 
         let parentScaleBy, parentTL;
 
-        const textureFilter = layer.paint.get('raster-resampling') === 'nearest' ?  gl.NEAREST : gl.LINEAR;
+        const textureFilter = layer.paint.get('raster-resampling') === 'nearest' ? gl.NEAREST : gl.LINEAR;
 
         context.activeTexture.set(gl.TEXTURE0);
         tile.texture.bind(textureFilter, gl.CLAMP_TO_EDGE, gl.LINEAR_MIPMAP_NEAREST);
@@ -63,10 +63,18 @@ function drawRaster(painter: Painter, sourceCache: SourceCache, layer: RasterSty
             tile.texture.bind(textureFilter, gl.CLAMP_TO_EDGE, gl.LINEAR_MIPMAP_NEAREST);
         }
 
+        const rasterArguments = {
+            width: painter.width,
+            height: painter.height,
+            x: coord.canonical.x,
+            y: coord.canonical.y,
+            z: coord.canonical.z,
+        };
+
         const terrainData = painter.style.map.terrain && painter.style.map.terrain.getTerrainData(coord);
         const terrainCoord = terrainData ? coord : null;
         const posMatrix = terrainCoord ? terrainCoord.posMatrix : painter.transform.calculatePosMatrix(coord.toUnwrapped(), align);
-        const uniformValues = rasterUniformValues(posMatrix, parentTL || [0, 0], parentScaleBy || 1, fade, layer);
+        const uniformValues = rasterUniformValues(posMatrix, parentTL || [0, 0], parentScaleBy || 1, fade, layer, rasterArguments);
 
         if (source instanceof ImageSource) {
             program.draw(context, gl.TRIANGLES, depthMode, StencilMode.disabled, colorMode, CullFaceMode.disabled,

@@ -5592,36 +5592,13 @@
       },
       "property-type": "data-constant"
     },
-    "raster-hue-rotate": {
+    "raster-sdf-limit": {
       "type": "number",
-      "default": 0,
-      "period": 360,
-      "transition": true,
-      "units": "degrees",
-      "doc": "Rotates hues around the color wheel.",
-      "sdk-support": {
-        "basic functionality": {
-          "js": "0.10.0",
-          "android": "2.0.1",
-          "ios": "2.0.0",
-          "macos": "0.1.0"
-        }
-      },
-      "expression": {
-        "interpolated": true,
-        "parameters": [
-          "zoom"
-        ]
-      },
-      "property-type": "data-constant"
-    },
-    "raster-brightness-min": {
-      "type": "number",
-      "doc": "Increase or reduce the brightness of the image. The value is the minimum brightness.",
-      "default": 0,
+      "doc": "Limit value for SDF.",
+      "default": 0.5,
       "minimum": 0,
       "maximum": 1,
-      "transition": true,
+      "transition": false,
       "sdk-support": {
         "basic functionality": {
           "js": "0.10.0",
@@ -5638,59 +5615,13 @@
       },
       "property-type": "data-constant"
     },
-    "raster-brightness-max": {
+    "raster-sdf-width": {
       "type": "number",
-      "doc": "Increase or reduce the brightness of the image. The value is the maximum brightness.",
-      "default": 1,
+      "doc": "Width value for SDF.",
+      "default": 0.01,
       "minimum": 0,
       "maximum": 1,
-      "transition": true,
-      "sdk-support": {
-        "basic functionality": {
-          "js": "0.10.0",
-          "android": "2.0.1",
-          "ios": "2.0.0",
-          "macos": "0.1.0"
-        }
-      },
-      "expression": {
-        "interpolated": true,
-        "parameters": [
-          "zoom"
-        ]
-      },
-      "property-type": "data-constant"
-    },
-    "raster-saturation": {
-      "type": "number",
-      "doc": "Increase or reduce the saturation of the image.",
-      "default": 0,
-      "minimum": -1,
-      "maximum": 1,
-      "transition": true,
-      "sdk-support": {
-        "basic functionality": {
-          "js": "0.10.0",
-          "android": "2.0.1",
-          "ios": "2.0.0",
-          "macos": "0.1.0"
-        }
-      },
-      "expression": {
-        "interpolated": true,
-        "parameters": [
-          "zoom"
-        ]
-      },
-      "property-type": "data-constant"
-    },
-    "raster-contrast": {
-      "type": "number",
-      "doc": "Increase or reduce the contrast of the image.",
-      "default": 0,
-      "minimum": -1,
-      "maximum": 1,
-      "transition": true,
+      "transition": false,
       "sdk-support": {
         "basic functionality": {
           "js": "0.10.0",
