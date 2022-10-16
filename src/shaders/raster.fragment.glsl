@@ -22,11 +22,11 @@ void main() {
     vec4 color = mix(color0, color1, u_fade_t);
     color.a *= u_opacity;
 
-    float v = (color.r + color.g + color.b)/3.0;
+    float v = color.r;
     float width = mix(u_width0, u_width1, v_pos1.y);
     v = (v - u_limit)/width;
-    //v = (v-u_brightness_low)/(u_brightness_high-u_brightness_low);
     v = clamp(0.5 - v, 0.0, 1.0);
+    v = min(v, color.g);
     v = v*color.a;
     gl_FragColor = vec4(0.8*v, 0.0, 0.0, v);
 
