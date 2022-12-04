@@ -20,17 +20,15 @@ void main() {
         color1.rgb = color1.rgb / color1.a;
     }
     vec4 color = mix(color0, color1, u_fade_t);
-    color.a *= u_opacity;
 
-    float v = color.r;
     float width = mix(u_width0, u_width1, v_pos1.y);
-    v = (v - u_limit)/width;
-    v = clamp(0.5 - v, 0.0, 1.0);
-    v = min(v, color.g);
-    v = v*color.a;
-    gl_FragColor = vec4(0.8*v, 0.0, 0.0, v);
 
-    //gl_FragColor = vec4(v_pos1, 0.0, 1.0);
+    width = min(width, 2.0*(1.0 - u_limit));
+    float v = 0.5 - (color.r - u_limit) / width;
+    v = clamp(v, 0.0, 1.0);
+    v = max(v, color.g);
+    
+    gl_FragColor = vec4(0.8*v, 0.0, 0.0, v*u_opacity);
 
 #ifdef OVERDRAW_INSPECTOR
     gl_FragColor = vec4(1.0);
