@@ -32,6 +32,8 @@ function drawRaster(painter: Painter, sourceCache: SourceCache, layer: RasterSty
     const minTileZ = coords[coords.length - 1].overscaledZ;
 
     const align = !painter.options.moving;
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.DST_COLOR, gl.ZERO, gl.ONE, gl.ZERO);
     for (const coord of coords) {
         // Set the lower zoom level to sublayer 0, and higher zoom levels to higher sublayers
         // Use gl.LESS to prevent double drawing in areas where tiles overlap.
@@ -86,6 +88,7 @@ function drawRaster(painter: Painter, sourceCache: SourceCache, layer: RasterSty
                 painter.quadTriangleIndexBuffer, painter.rasterBoundsSegments);
         }
     }
+    gl.blendFuncSeparate(gl.ONE, gl.ZERO, gl.ONE, gl.ZERO);
 }
 
 function getFadeValues(tile, parentTile, sourceCache, layer, transform, terrain) {

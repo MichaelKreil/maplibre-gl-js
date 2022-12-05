@@ -27,8 +27,8 @@ void main() {
     float v = 0.5 - (color.r - u_limit) / width;
     v = clamp(v, 0.0, 1.0);
     v = max(v, color.g);
-    
-    gl_FragColor = vec4(0.8*v, 0.0, 0.0, v*u_opacity);
+    // color: #d50d2e
+    gl_FragColor = (v * vec4(0.835, 0.05, 0.18, 1.0) + (1.0 - v) * vec4(1.0, 1.0, 1.0, 1.0)) * u_opacity;
 
 #ifdef OVERDRAW_INSPECTOR
     gl_FragColor = vec4(1.0);
