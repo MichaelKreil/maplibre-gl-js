@@ -2511,12 +2511,12 @@ class Map extends Camera {
         this._metaPress = false;
         this._cooperativeGesturesScreen = DOM.create('div', 'maplibregl-cooperative-gesture-screen', container);
         let modifierKeyName = 'Control';
-        let desktopMessage = typeof this._cooperativeGestures !== 'boolean' && this._cooperativeGestures.windowsHelpText ? this._cooperativeGestures.windowsHelpText : 'Verwenden Sie Strg + Scroll, um die Karte zu zoomen';
+        let desktopMessage = typeof this._cooperativeGestures !== 'boolean' && this._cooperativeGestures.windowsHelpText ? this._cooperativeGestures.windowsHelpText : 'Verwenden Sie Strg + Scroll,<br>um die Karte zu zoomen';
         if (navigator.platform.indexOf('Mac') === 0) {
-            desktopMessage = typeof this._cooperativeGestures !== 'boolean' && this._cooperativeGestures.macHelpText ? this._cooperativeGestures.macHelpText : 'Verwenden Sie ⌘ + Scrollen, um die Karte zu vergrößern.';
+            desktopMessage = typeof this._cooperativeGestures !== 'boolean' && this._cooperativeGestures.macHelpText ? this._cooperativeGestures.macHelpText : 'Verwenden Sie ⌘ + Scrollen,<br>um die Karte zu vergrößern.';
             modifierKeyName = 'Meta';
         }
-        const mobileMessage = typeof this._cooperativeGestures !== 'boolean' && this._cooperativeGestures.mobileHelpText ? this._cooperativeGestures.mobileHelpText : 'Verwenden Sie zwei Finger, um die Karte zu bewegen';
+        const mobileMessage = typeof this._cooperativeGestures !== 'boolean' && this._cooperativeGestures.mobileHelpText ? this._cooperativeGestures.mobileHelpText : 'Verwenden Sie zwei Finger,<br>um die Karte zu bewegen';
         this._cooperativeGesturesScreen.innerHTML = `
             <div class="maplibregl-desktop-message">${desktopMessage}</div>
             <div class="maplibregl-mobile-message">${mobileMessage}</div>
