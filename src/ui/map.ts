@@ -37,13 +37,13 @@ import type {StyleImageInterface, StyleImageMetadata} from '../style/style_image
 import type {PointLike} from './camera';
 import type ScrollZoomHandler from './handler/scroll_zoom';
 import type BoxZoomHandler from './handler/box_zoom';
-import type {TouchPitchHandler} from './handler/touch_zoom_rotate';
+import type {TwoFingersTouchPitchHandler} from './handler/two_fingers_touch';
 import type DragRotateHandler from './handler/shim/drag_rotate';
 import DragPanHandler, {DragPanOptions} from './handler/shim/drag_pan';
 
 import type KeyboardHandler from './handler/keyboard';
 import type DoubleClickZoomHandler from './handler/shim/dblclick_zoom';
-import type TouchZoomRotateHandler from './handler/shim/touch_zoom_rotate';
+import type TwoFingersTouchZoomRotateHandler from './handler/shim/two_fingers_touch';
 import defaultLocale from './default_locale';
 import type {TaskID} from '../util/task_queue';
 import type {Cancelable} from '../types/cancelable';
@@ -227,8 +227,8 @@ const defaultOptions = {
  * @param {boolean|Object} [options.dragPan=true] If `true`, the "drag to pan" interaction is enabled. An `Object` value is passed as options to {@link DragPanHandler#enable}.
  * @param {boolean} [options.keyboard=true] If `true`, keyboard shortcuts are enabled (see {@link KeyboardHandler}).
  * @param {boolean} [options.doubleClickZoom=true] If `true`, the "double click to zoom" interaction is enabled (see {@link DoubleClickZoomHandler}).
- * @param {boolean|Object} [options.touchZoomRotate=true] If `true`, the "pinch to rotate and zoom" interaction is enabled. An `Object` value is passed as options to {@link TouchZoomRotateHandler#enable}.
- * @param {boolean|Object} [options.touchPitch=true] If `true`, the "drag to pitch" interaction is enabled. An `Object` value is passed as options to {@link TouchPitchHandler#enable}.
+ * @param {boolean|Object} [options.touchZoomRotate=true] If `true`, the "pinch to rotate and zoom" interaction is enabled. An `Object` value is passed as options to {@link TwoFingersTouchZoomRotateHandler#enable}.
+ * @param {boolean|Object} [options.touchPitch=true] If `true`, the "drag to pitch" interaction is enabled. An `Object` value is passed as options to {@link TwoFingersTouchPitchHandler#enable}.
  * @param {boolean|GestureOptions} [options.cooperativeGestures=undefined] If `true` or set to an options object, map is only accessible on desktop while holding Command/Ctrl and only accessible on mobile with two fingers. Interacting with the map using normal gestures will trigger an informational screen. With this option enabled, "drag to pitch" requires a three-finger gesture.
  * A valid options object includes the following properties to customize the text on the informational screen. The values below are the defaults.
  * {
@@ -368,16 +368,16 @@ class Map extends Camera {
     doubleClickZoom: DoubleClickZoomHandler;
 
     /**
-     * The map's {@link TouchZoomRotateHandler}, which allows the user to zoom or rotate the map with touch gestures.
-     * Find more details and examples using `touchZoomRotate` in the {@link TouchZoomRotateHandler} section.
+     * The map's {@link TwoFingersTouchZoomRotateHandler}, which allows the user to zoom or rotate the map with touch gestures.
+     * Find more details and examples using `touchZoomRotate` in the {@link TwoFingersTouchZoomRotateHandler} section.
      */
-    touchZoomRotate: TouchZoomRotateHandler;
+    touchZoomRotate: TwoFingersTouchZoomRotateHandler;
 
     /**
-     * The map's {@link TouchPitchHandler}, which allows the user to pitch the map with touch gestures.
-     * Find more details and examples using `touchPitch` in the {@link TouchPitchHandler} section.
+     * The map's {@link TwoFingersTouchPitchHandler}, which allows the user to pitch the map with touch gestures.
+     * Find more details and examples using `touchPitch` in the {@link TwoFingersTouchPitchHandler} section.
      */
-    touchPitch: TouchPitchHandler;
+    touchPitch: TwoFingersTouchPitchHandler;
 
     constructor(options: MapOptions) {
         PerformanceUtils.mark(PerformanceMarkers.create);
@@ -450,9 +450,6 @@ class Map extends Camera {
 
         this._setupContainer();
         this._setupPainter();
-        if (this.painter === undefined) {
-            throw new Error('Failed to initialize WebGL.');
-        }
 
         this.on('move', () => this._update(false));
         this.on('moveend', () => this._update(false));
@@ -606,7 +603,7 @@ class Map extends Camera {
         return this._controls.indexOf(control) > -1;
     }
 
-    calculateCameraOptionsFromTo(from: LngLat, altitudeFrom: number, to: LngLat, altitudeTo?: number) : CameraOptions {
+    calculateCameraOptionsFromTo(from: LngLat, altitudeFrom: number, to: LngLat, altitudeTo?: number): CameraOptions {
         if (altitudeTo == null && this.terrain) {
             altitudeTo = this.transform.getElevation(to, this.terrain);
         }
@@ -962,8 +959,7 @@ class Map extends Camera {
         return this._rotating || this.handlers.isRotating();
     }
 
-    _createDelegatedListener(type: MapEvent | string, layerId: string, listener: Listener):
-    {
+    _createDelegatedListener(type: MapEvent | string, layerId: string, listener: Listener): {
         layer: string;
         listener: Listener;
         delegates: {[type in keyof MapEventType]?: (e: any) => void};
@@ -1490,7 +1486,7 @@ class Map extends Camera {
 
     _updateStyle(style: StyleSpecification | string | null, options?: StyleSwapOptions & StyleOptions) {
         // transformStyle relies on having previous style serialized, if it is not loaded yet, delay _updateStyle until previous style is loaded
-        if (options.transformStyle && !this.style._loaded) {
+        if (options.transformStyle && this.style && !this.style._loaded) {
             this.style.once('style.load', () => this._updateStyle(style, options));
             return;
         }
@@ -2202,7 +2198,7 @@ class Map extends Camera {
      *
      * @see [Create a timeline animation](https://maplibre.org/maplibre-gl-js-docs/example/timeline-animation/)
      */
-    setFilter(layerId: string, filter?: FilterSpecification | null,  options: StyleSetterOptions = {}) {
+    setFilter(layerId: string, filter?: FilterSpecification | null, options: StyleSetterOptions = {}) {
         this.style.setFilter(layerId, filter, options);
         return this._update(true);
     }
@@ -2552,12 +2548,26 @@ class Map extends Camera {
             antialias: this._antialias || false
         });
 
+        let webglcontextcreationerrorDetailObject: any = null;
+        this._canvas.addEventListener('webglcontextcreationerror', (args: WebGLContextEvent) => {
+            webglcontextcreationerrorDetailObject = {requestedAttributes: attributes};
+            if (args) {
+                webglcontextcreationerrorDetailObject.statusMessage = args.statusMessage;
+                webglcontextcreationerrorDetailObject.type = args.type;
+            }
+        }, {once: true});
+
         const gl = this._canvas.getContext('webgl', attributes) ||
             this._canvas.getContext('experimental-webgl', attributes);
 
         if (!gl) {
-            this.fire(new ErrorEvent(new Error('Failed to initialize WebGL')));
-            return;
+            const msg = 'Failed to initialize WebGL';
+            if (webglcontextcreationerrorDetailObject) {
+                webglcontextcreationerrorDetailObject.message = msg;
+                throw new Error(JSON.stringify(webglcontextcreationerrorDetailObject));
+            } else {
+                throw new Error(msg);
+            }
         }
 
         this.painter = new Painter(gl as WebGLRenderingContext, this.transform);

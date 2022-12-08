@@ -16,6 +16,10 @@
     height: 100%;
 }
 
+.maplibregl-ctrl-group button.maplibregl-ctrl-compass {
+    touch-action: none;
+}
+
 .maplibregl-canvas-container.maplibregl-interactive,
 .maplibregl-ctrl-group button.maplibregl-ctrl-compass {
     cursor: grab;
@@ -789,6 +793,7 @@ a.maplibregl-ctrl-logo.maplibregl-compact {
     opacity: 0;
     pointer-events: none;
     transition: opacity 1s ease 1s;
+    z-index: 99999;
 }
 
 .maplibregl-cooperative-gesture-screen.maplibregl-show {
